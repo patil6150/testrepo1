@@ -1,0 +1,174 @@
+graph TB
+    subgraph OnPremise["🏢 ON-PREMISE ENVIRONMENT"]
+        subgraph AppLayer["Application Layer"]
+            LegacyApp["Legacy Customer<br/>Onboarding Application<br/>🖥️ Windows Server"]
+        end
+        
+        subgraph DataLayer["Database Layer"]
+            SQLServer["SQL Server 2019<br/>💾 Database<br/>IP: 10.10.10.50<br/>Port: 1433<br/>━━━━━━━━━━━━<br/>🔐 Auth Methods:<br/>✓ SQL Server Auth<br/>✓ Windows Auth<br/>━━━━━━━━━━━━<br/>Size: 2-3 TB<br/>Tables: 100+<br/>CDC Enabled"]
+        end
+        
+        subgraph StorageLayer["Storage Layer"]
+            NAS["NAS/SAN File Server<br/>📁 Network Storage<br/>IP: 10.10.10.200<br/>━━━━━━━━━━━━<br/>🔐 Protocols:<br/>✓ NFS (Port 2049)<br/>✓ SMB/CIFS (Port 445)<br/>━━━━━━━━━━━━<br/>Auth: Active Directory<br/>Size: 2-3 TB<br/>Files: Documents, Images, PDFs"]
+        end
+        
+        subgraph AuthLayer["Authentication & Identity"]
+            AD["Active Directory<br/>🔑 Domain Controller<br/>IP: 10.10.10.10<br/>━━━━━━━━━━━━<br/>Services:<br/>✓ LDAP (Port 389)<br/>✓ LDAPS (Port 636)<br/>✓ Kerberos (Port 88)<br/>━━━━━━━━━━━━<br/>Domain: COMPANY.LOCAL<br/>Users: Corporate Authentication"]
+        end
+        
+        subgraph MigrationTools["Migration Tools (On-Premise)"]
+            DSAgent["AWS DataSync Agent<br/>🔄 VM Appliance<br/>IP: 10.10.10.100<br/>━━━━━━━━━━━━<br/>Platform:<br/>✓ VMware ESXi / Hyper-V<br/>Resources: 4 vCPU, 32GB RAM<br/>━━━━━━━━━━━━<br/>Connects To:<br/>→ NAS (NFS/SMB)<br/>→ AWS DataSync Service<br/>→ Amazon S3"]
+        end
+        
+        subgraph NetworkSec["Network Security"]
+            Firewall["Corporate Firewall<br/>🛡️ Security Gateway<br/>━━━━━━━━━━━━<br/>Outbound Rules:<br/>✓ UDP 500, 4500 (IPSec)<br/>✓ TCP 443 (HTTPS)<br/>✓ Allow to AWS endpoints"]
+        end
+    end
+    
+    subgraph Connectivity["🌐 SECURE CONNECTIVITY LAYER"]
+        subgraph VPNOption["Option 1: Site-to-Site VPN"]
+            VPN["AWS VPN Connection<br/>🔐 IPSec Tunnel<br/>━━━━━━━━━━━━<br/>Protocol: IPSec<br/>Encryption: AES-256<br/>Key Exchange: IKEv2<br/>Tunnels: Dual (HA)<br/>Routing: BGP<br/>━━━━━━━━━━━━<br/>Latency: 20-50ms<br/>Bandwidth: 1.25 Gbps max"]
+        end
+        
+        subgraph DXOption["Option 2: Direct Connect (Recommended)"]
+            DX["AWS Direct Connect<br/>⚡ Dedicated Fiber<br/>━━━━━━━━━━━━<br/>Speed: 10 Gbps<br/>Protocol: 802.1Q VLAN<br/>Routing: BGP<br/>━━━━━━━━━━━━<br/>Latency: < 10ms<br/>Dedicated bandwidth<br/>Consistent performance"]
+        end
+    end
+    
+    subgraph AWSCloud["☁️ AWS CLOUD ENVIRONMENT"]
+        subgraph NetworkLayer["VPC Network Layer"]
+            VPC["Amazon VPC<br/>🏗️ Virtual Private Cloud<br/>━━━━━━━━━━━━<br/>CIDR: 10.0.0.0/16<br/>Region: us-east-1<br/>AZs: Multi-AZ deployment"]
+            
+            VGW["Virtual Private Gateway<br/>🚪 VPN/DX Entry Point<br/>━━━━━━━━━━━━<br/>Attached to VPC<br/>BGP ASN: 65000"]
+            
+            subgraph Subnets["VPC Subnets"]
+                PrivSubnet1["Private Subnet 1<br/>10.0.1.0/24<br/>AZ: us-east-1a"]
+                PrivSubnet2["Private Subnet 2<br/>10.0.2.0/24<br/>AZ: us-east-1b"]
+                DBSubnet1["DB Subnet 1<br/>10.0.11.0/24<br/>AZ: us-east-1a"]
+                DBSubnet2["DB Subnet 2<br/>10.0.12.0/24<br/>AZ: us-east-1b"]
+            end
+            
+            SG["Security Groups<br/>🔒 Virtual Firewalls<br/>━━━━━━━━━━━━<br/>DMS-SG:<br/>  In: 1433 from On-Prem<br/>  Out: 5432 to RDS<br/>RDS-SG:<br/>  In: 5432 from DMS/Pega<br/>S3-Endpoint-SG:<br/>  In: 443 from DataSync"]
+            
+            NACL["Network ACLs<br/>Subnet-level filtering"]
+        end
+        
+        subgraph MigrationServices["Migration Services Layer"]
+            DMS["AWS Database Migration Service<br/>🔄 DMS Replication Instance<br/>━━━━━━━━━━━━<br/>Instance: r5.4xlarge<br/>vCPU: 16 | RAM: 128 GB<br/>Storage: 1 TB (auto-scaling)<br/>Deployment: Multi-AZ<br/>━━━━━━━━━━━━<br/>Source Endpoint:<br/>  Engine: sqlserver<br/>  Host: 10.10.10.50:1433<br/>  🔐 Auth: SQL Server Auth<br/>  User: dms_migration_user<br/>  SSL: Required (TLS 1.2+)<br/>━━━━━━━━━━━━<br/>Target Endpoint:<br/>  Engine: postgres<br/>  Host: pega-db.xxx.rds...<br/>  Port: 5432<br/>  🔐 Auth: PostgreSQL + SSL<br/>  User: pegaadmin<br/>━━━━━━━━━━━━<br/>Migration Task:<br/>  Mode: Full Load + CDC<br/>  Threads: 16 parallel<br/>  Validation: Enabled"]
+            
+            DataSync["AWS DataSync Service<br/>📤 File Transfer Service<br/>━━━━━━━━━━━━<br/>Source Location:<br/>  Type: NFS/SMB<br/>  Agent: agent-abc123<br/>  Path: /customer-docs<br/>━━━━━━━━━━━━<br/>Destination:<br/>  Type: S3<br/>  Bucket: pega-documents<br/>  🔐 Auth: IAM Role<br/>━━━━━━━━━━━━<br/>Transfer Options:<br/>  Mode: Incremental<br/>  Verification: Checksums<br/>  Preserve: Metadata"]
+        end
+        
+        subgraph DatabaseLayer["Database Layer"]
+            RDS["Amazon RDS PostgreSQL<br/>💾 Managed Database<br/>━━━━━━━━━━━━<br/>Instance: db.r6g.4xlarge<br/>vCPU: 16 | RAM: 128 GB<br/>Storage: 7.5 TB (auto-scale)<br/>IOPS: 30,000 provisioned<br/>━━━━━━━━━━━━<br/>Deployment: Multi-AZ<br/>Primary: us-east-1a<br/>Standby: us-east-1b<br/>━━━━━━━━━━━━<br/>🔐 Authentication:<br/>✓ PostgreSQL Native Auth<br/>✓ IAM Database Auth<br/>✓ SSL/TLS Certificates<br/>━━━━━━━━━━━━<br/>Encryption:<br/>  At Rest: KMS (AES-256)<br/>  In Transit: TLS 1.2+<br/>━━━━━━━━━━━━<br/>Backups:<br/>  Automated: Daily<br/>  Retention: 30 days<br/>  Manual: Pre-migration<br/>━━━━━━━━━━━━<br/>Engine: PostgreSQL 14.x<br/>Port: 5432"]
+        end
+        
+        subgraph StorageLayer2["Object Storage Layer"]
+            S3["Amazon S3<br/>📦 Object Storage<br/>━━━━━━━━━━━━<br/>Bucket: pega-customer-docs<br/>Region: us-east-1<br/>Size: ~3 TB (growing)<br/>━━━━━━━━━━━━<br/>🔐 Security:<br/>✓ Server-Side Encryption<br/>  (SSE-KMS)<br/>✓ Bucket Policies<br/>✓ IAM Policies<br/>✓ Versioning: Enabled<br/>✓ MFA Delete: Enabled<br/>━━━━━━━━━━━━<br/>Access Methods:<br/>  → Pega Cloud (PrivateLink)<br/>  → DataSync (IAM Role)<br/>  → S3 API (HTTPS/443)<br/>━━━━━━━━━━━━<br/>Storage Classes:<br/>  → Standard (hot data)<br/>  → IA (archive after 90d)<br/>  → Glacier (compliance)"]
+            
+            VPCEndpointS3["VPC Endpoint (S3)<br/>🔗 Private S3 Access<br/>━━━━━━━━━━━━<br/>Type: Gateway Endpoint<br/>No internet required<br/>Route: VPC → S3"]
+        end
+        
+        subgraph SecurityServices["Security & Identity Services"]
+            IAM["AWS IAM<br/>👤 Identity & Access<br/>━━━━━━━━━━━━<br/>Service Roles:<br/>✓ DMS-Execution-Role<br/>✓ DataSync-S3-Role<br/>✓ RDS-Monitoring-Role<br/>━━━━━━━━━━━━<br/>Policies:<br/>✓ Least Privilege<br/>✓ MFA Required (Admin)<br/>✓ Resource-based policies<br/>━━━━━━━━━━━━<br/>Authentication:<br/>✓ SAML 2.0 Federation<br/>✓ SSO with Corp IdP"]
+            
+            KMS["AWS KMS<br/>🔑 Key Management<br/>━━━━━━━━━━━━<br/>Customer Managed Keys:<br/>✓ RDS-Encryption-Key<br/>✓ S3-Encryption-Key<br/>━━━━━━━━━━━━<br/>Features:<br/>✓ Automatic Rotation<br/>✓ CloudTrail Logging<br/>✓ FIPS 140-2 Level 2<br/>━━━━━━━━━━━━<br/>Key Policy:<br/>  Grant access to:<br/>  → RDS service<br/>  → S3 service<br/>  → Admin users"]
+            
+            Secrets["AWS Secrets Manager<br/>🔐 Credential Storage<br/>━━━━━━━━━━━━<br/>Stored Secrets:<br/>✓ SQL Server creds<br/>  (dms_migration_user)<br/>✓ PostgreSQL creds<br/>  (pegaadmin)<br/>✓ SMB credentials<br/>━━━━━━━━━━━━<br/>Rotation:<br/>  Automatic: Every 30 days<br/>  Lambda-based rotation<br/>━━━━━━━━━━━━<br/>Encryption: KMS<br/>Access: IAM policies"]
+            
+            CloudTrail["AWS CloudTrail<br/>📋 Audit Logging<br/>━━━━━━━━━━━━<br/>Logs:<br/>✓ All API calls<br/>✓ Console sign-ins<br/>✓ KMS key usage<br/>✓ S3 access<br/>━━━━━━━━━━━━<br/>Retention: 90 days<br/>Storage: S3 bucket"]
+            
+            PrivateLink["AWS PrivateLink<br/>🔗 Private Connectivity<br/>━━━━━━━━━━━━<br/>Purpose:<br/>  VPC → Pega Cloud<br/>━━━━━━━━━━━━<br/>Endpoint Type: Interface<br/>DNS: Private DNS names<br/>No Internet Gateway needed"]
+        end
+        
+        subgraph MonitoringLayer["Monitoring & Logging"]
+            CloudWatch["Amazon CloudWatch<br/>📊 Monitoring<br/>━━━━━━━━━━━━<br/>Metrics:<br/>✓ DMS replication lag<br/>✓ RDS CPU/Memory/IOPS<br/>✓ S3 request metrics<br/>✓ DataSync throughput<br/>━━━━━━━━━━━━<br/>Alarms:<br/>✓ Replication lag > 10min<br/>✓ RDS CPU > 80%<br/>✓ Storage > 80%<br/>━━━━━━━━━━━━<br/>Logs:<br/>  → Application logs<br/>  → Database logs<br/>  → VPC Flow Logs<br/>━━━━━━━━━━━━<br/>Dashboards:<br/>  Migration progress<br/>  System health"]
+            
+            SNS["Amazon SNS<br/>📧 Notifications<br/>━━━━━━━━━━━━<br/>Topics:<br/>✓ Migration-Alerts<br/>✓ Critical-Issues<br/>━━━━━━━━━━━━<br/>Subscribers:<br/>  → Email<br/>  → SMS<br/>  → Lambda"]
+        end
+        
+        subgraph PegaPlatform["Pega Cloud Platform"]
+            Pega["Pega Customer Service<br/>🎯 Application Platform<br/>━━━━━━━━━━━━<br/>Platform: Pega Cloud<br/>Hosting: AWS (Managed by Pega)<br/>━━━━━━━━━━━━<br/>Database Connection:<br/>  → RDS PostgreSQL<br/>  Protocol: JDBC/PostgreSQL<br/>  Port: 5432<br/>  🔐 Auth: PostgreSQL + SSL<br/>━━━━━━━━━━━━<br/>File Access:<br/>  → S3 (via PrivateLink)<br/>  Protocol: S3 API / HTTPS<br/>  🔐 Auth: IAM Role<br/>━━━━━━━━━━━━<br/>User Authentication:<br/>  → SSO via SAML 2.0<br/>  → Optional: AWS Directory<br/>    Service integration<br/>  → Corporate AD federation"]
+        end
+    end
+    
+    %% Connections - Application Flow
+    LegacyApp -->|Queries| SQLServer
+    LegacyApp -->|File Access| NAS
+    SQLServer -.->|Domain Auth| AD
+    NAS -.->|Domain Auth| AD
+    
+    %% Connections - Migration Tools to Source
+    DSAgent -->|NFS/SMB<br/>Ports: 2049, 445| NAS
+    
+    %% Connections - On-Prem to AWS
+    SQLServer -->|SQL Server Auth<br/>User: dms_migration_user<br/>Port: 1433<br/>Protocol: TDS over TLS| Firewall
+    DSAgent -->|HTTPS/443<br/>AWS Signature V4| Firewall
+    
+    Firewall -->|IPSec VPN<br/>AES-256| VPN
+    Firewall -->|Dedicated Fiber<br/>10 Gbps| DX
+    
+    VPN -->|Encrypted Tunnel| VGW
+    DX -->|Private VLAN| VGW
+    
+    %% Connections - AWS Internal Network
+    VGW --> VPC
+    VPC --> PrivSubnet1
+    VPC --> PrivSubnet2
+    VPC --> DBSubnet1
+    VPC --> DBSubnet2
+    
+    PrivSubnet1 --> DMS
+    
+    %% Connections - DMS Flow
+    DMS -->|Source Connection<br/>SQL Server Auth<br/>SSL/TLS| SQLServer
+    DMS -->|Target Connection<br/>PostgreSQL Auth<br/>SSL/TLS<br/>Port: 5432| RDS
+    
+    %% Connections - DataSync Flow
+    DSAgent -->|Activation & Control<br/>HTTPS/443| DataSync
+    DataSync -->|S3 API<br/>IAM Role Auth<br/>HTTPS/443| VPCEndpointS3
+    VPCEndpointS3 --> S3
+    
+    %% Connections - RDS
+    RDS --> DBSubnet1
+    RDS --> DBSubnet2
+    
+    %% Connections - Pega
+    Pega -->|JDBC<br/>PostgreSQL Protocol<br/>Port: 5432<br/>SSL Auth| RDS
+    Pega -->|S3 API<br/>IAM Role<br/>HTTPS/443| PrivateLink
+    PrivateLink --> S3
+    
+    %% Connections - Security Services
+    DMS -.->|Retrieve Credentials| Secrets
+    DataSync -.->|Assume Role| IAM
+    RDS -.->|Encryption Keys| KMS
+    S3 -.->|Encryption Keys| KMS
+    
+    %% Connections - Monitoring
+    DMS -.->|Metrics & Logs| CloudWatch
+    RDS -.->|Metrics & Logs| CloudWatch
+    DataSync -.->|Metrics & Logs| CloudWatch
+    CloudWatch -->|Trigger Alerts| SNS
+    
+    %% Connections - Audit
+    IAM -.->|API Logging| CloudTrail
+    KMS -.->|Key Usage Logging| CloudTrail
+    S3 -.->|Access Logging| CloudTrail
+    
+    %% Styling
+    classDef onprem fill:#E8EAF6,stroke:#1E2761,stroke-width:3px,color:#000
+    classDef database fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px,color:#000
+    classDef storage fill:#FFF9C4,stroke:#F57F17,stroke-width:2px,color:#000
+    classDef network fill:#FFECB3,stroke:#FF6F00,stroke-width:2px,color:#000
+    classDef security fill:#F3E5F5,stroke:#6A1B9A,stroke-width:2px,color:#000
+    classDef migration fill:#E1F5FE,stroke:#01579B,stroke-width:2px,color:#000
+    classDef aws fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#000
+    classDef pega fill:#C8E6C9,stroke:#388E3C,stroke-width:3px,color:#000
+    
+    class SQLServer,RDS database
+    class NAS,S3 storage
+    class VPN,DX,VPC,VGW,Firewall network
+    class IAM,KMS,Secrets,CloudTrail,AD,PrivateLink security
+    class DMS,DataSync,DSAgent migration
+    class Pega pega
+    class CloudWatch,SNS aws
